@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NCPDP Bingo</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card-bg: #ffffff;
+      --border: #2c3e50;
+      --accent: #0069d9;
+      --accent-soft: #e3f0ff;
+      --mark: #1abc9c;
+      --mark-soft: #e6f9f4;
+      --free: #ffeaa7;
+      --free-border: #f39c12;
+      --text-main: #2c3e50;
+      --text-muted: #7f8c8d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #e6f0ff 0, #f5f7fb 40%, #f5f7fb 100%);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 900px;
+      width: 100%;
+      padding: 24px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      font-size: 32px;
+      margin: 0;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .subtitle {
+      margin: 8px 0 0 0;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+    }
+
+    .btn-secondary {
+      background: #ecf0f1;
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: #dde2e6;
+    }
+
+    .board-wrapper {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 18px 18px 16px;
+      box-shadow:
+        0 20px 40px rgba(0,0,0,0.08),
+        0 0 0 1px rgba(44,62,80,0.06);
+    }
+
+    .board-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .board-title {
+      font-size: 18px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .status {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .status.bingo {
+      color: #27ae60;
+      font-weight: 600;
+    }
+
+    .bingo-grid {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+    }
+
+    .bingo-grid tr {
+      height: 88px;
+    }
+
+    .bingo-grid th,
+    .bingo-grid td {
+      border: 1px solid rgba(44,62,80,0.3);
+      padding: 4px;
+      background: #fdfdfd;
+      position: relative;
+    }
+
+    .bingo-grid th {
+      background: var(--accent);
+      color: white;
+      font-size: 20px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .cell-inner {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.3;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease, box-shadow 0.08s ease;
+    }
+
+    .cell-inner:hover {
+      background: var(--accent-soft);
+    }
+
+    td.selected .cell-inner {
+      background: var(--mark-soft);
+      color: var(--text-main);
+      box-shadow: inset 0 0 0 2px var(--mark);
+      transform: scale(0.98);
+    }
+
+    td.selected::after {
+      content: "✔";
+      position: absolute;
+      top: 4px;
+      right: 7px;
+      font-size: 13px;
+      color: var(--mark);
+      font-weight: 700;
+    }
+
+    td.free {
+      background: var(--free);
+      border-color: var(--free-border);
+    }
+
+    td.free .cell-inner {
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    td.free.selected .cell-inner {
+      background: #ffe2a0;
+      box-shadow: inset 0 0 0 2px var(--free-border);
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .toast {
+      margin-top: 8px;
+      text-align: center;
+      font-size: 13px;
+      min-height: 18px;
+      font-weight: 500;
+    }
+
+    .toast.bingo {
+      color: #27ae60;
+    }
+
+    @media (max-width: 600px) {
+      .app {
+        padding: 12px;
+      }
+      .bingo-grid tr {
+        height: 70px;
+      }
+      .title {
+        font-size: 26px;
+      }
+      .board-title {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1 class="title">NCPDP Bingo</h1>
+      <p class="subtitle">
+        Click squares to mark them. Center is a FREE SPACE. Get 5 in a row (row, column, or diagonal) to win!
+      </p>
+    </div>
+
+    <div class="controls">
+      <button class="btn-primary" id="newCardBtn">New Card</button>
+      <button class="btn-secondary" id="clearMarksBtn">Clear Marks</button>
+    </div>
+
+    <div class="board-wrapper">
+      <div class="board-header">
+        <div class="board-title">B I N G O</div>
+        <div class="status" id="statusText">No bingo yet.</div>
+      </div>
+
+      <table class="bingo-grid" id="bingoGrid">
+        <!-- Filled by JavaScript -->
+      </table>
+
+      <div class="toast" id="toastMessage"></div>
+
+      <div class="footer-note">
+        Tip: Use this as a virtual card while someone calls out NCPDP elements in your meeting.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // NCPDP element pool (24 items; center is FREE SPACE)
+    const NCPDP_ELEMENTS = [
+      "BIN Number",
+      "PCN",
+      "Patient ID",
+      "Claim Segment",
+      "Transaction Code",
+      "Prescriber ID (411-DB)",
+      "Date of Service (444-E9)",
+      "Product/Service ID (407-D7)",
+      "DAW Code (408-D8)",
+      "DUR/PPS Segment",
+      "Service Provider ID",
+      "NCPDP 5.1",
+      "NCPDP D.0",
+      "Coordination of Benefits",
+      "Refill Number (405-D5)",
+      "Prior Auth Type (461-EU)",
+      "Submission Clarification Code",
+      "Gross Amount Due (430-DU)",
+      "Patient Pay Amount (505-F5)",
+      "Compound Code (406-D6)",
+      "Patient Relationship (309-C9)",
+      "Pharmacy NPI",
+      "Prescriber NPI",
+      "Pricing Segment"
+    ];
+
+    const SIZE = 5;
+    let selected = [];
+
+    const gridEl = document.getElementById("bingoGrid");
+    const statusText = document.getElementById("statusText");
+    const toastMessage = document.getElementById("toastMessage");
+    const newCardBtn = document.getElementById("newCardBtn");
+    const clearMarksBtn = document.getElementById("clearMarksBtn");
+
+    function shuffle(array) {
+      const arr = array.slice();
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function initSelected() {
+      selected = [];
+      for (let r = 0; r < SIZE; r++) {
+        const row = [];
+        for (let c = 0; c < SIZE; c++) {
+          // Center FREE SPACE is pre-selected
+          row.push(r === 2 && c === 2);
+        }
+        selected.push(row);
+      }
+    }
+
+    function buildCard() {
+      const shuffled = shuffle(NCPDP_ELEMENTS);
+      const cardValues = [];
+      let idx = 0;
+      for (let r = 0; r < SIZE; r++) {
+        const rowVals = [];
+        for (let c = 0; c < SIZE; c++) {
+          if (r === 2 && c === 2) {
+            rowVals.push("FREE SPACE");
+          } else {
+            rowVals.push(shuffled[idx++]);
+          }
+        }
+        cardValues.push(rowVals);
+      }
+
+      // Build the table
+      let html = "<thead><tr>";
+      const headers = ["B", "I", "N", "G", "O"];
+      headers.forEach(h => {
+        html += `<th>${h}</th>`;
+      });
+      html += "</tr></thead><tbody>";
+
+      for (let r = 0; r < SIZE; r++) {
+        html += "<tr>";
+        for (let c = 0; c < SIZE; c++) {
+          const isFree = (r === 2 && c === 2);
+          const cellClass = isFree ? "free selected" : "";
+          const value = cardValues[r][c];
+          html += `
+            <td class="${cellClass}" data-row="${r}" data-col="${c}">
+              <div class="cell-inner">
+                ${value}
+              </div>
+            </td>
+          `;
+        }
+        html += "</tr>";
+      }
+      html += "</tbody>";
+      gridEl.innerHTML = html;
+
+      // Reset selected state
+      initSelected();
+
+      // Attach event listeners
+      Array.from(gridEl.querySelectorAll("td")).forEach(td => {
+        const row = parseInt(td.getAttribute("data-row"), 10);
+        const col = parseInt(td.getAttribute("data-col"), 10);
+
+        if (row === 2 && col === 2) {
+          // FREE SPACE is pre-selected; no toggle needed
+          selected[row][col] = true;
+          return;
+        }
+
+        td.addEventListener("click", () => {
+          selected[row][col] = !selected[row][col];
+          td.classList.toggle("selected", selected[row][col]);
+          checkBingo();
+        });
+      });
+
+      // Initial bingo check (center free space only)
+      checkBingo(true);
+    }
+
+    function checkBingo(isInitial = false) {
+      const bingo = hasBingo();
+      if (bingo) {
+        statusText.textContent = "BINGO!";
+        statusText.classList.add("bingo");
+        toastMessage.textContent = "Nice job! You completed a NCPDP Bingo line.";
+        toastMessage.classList.add("bingo");
+      } else {
+        statusText.textContent = "No bingo yet.";
+        statusText.classList.remove("bingo");
+        if (!isInitial) {
+          toastMessage.textContent = "";
+          toastMessage.classList.remove("bingo");
+        }
+      }
+    }
+
+    function hasBingo() {
+      // Rows
+      for (let r = 0; r < SIZE; r++) {
+        let all = true;
+        for (let c = 0; c < SIZE; c++) {
+          if (!selected[r][c]) { all = false; break; }
+        }
+        if (all) return true;
+      }
+
+      // Columns
+      for (let c = 0; c < SIZE; c++) {
+        let all = true;
+        for (let r = 0; r < SIZE; r++) {
+          if (!selected[r][c]) { all = false; break; }
+        }
+        if (all) return true;
+      }
+
+      // Diagonal (top-left to bottom-right)
+      let allDiag1 = true;
+      for (let i = 0; i < SIZE; i++) {
+        if (!selected[i][i]) { allDiag1 = false; break; }
+      }
+      if (allDiag1) return true;
+
+      // Diagonal (top-right to bottom-left)
+      let allDiag2 = true;
+      for (let i = 0; i < SIZE; i++) {
+        if (!selected[i][SIZE - 1 - i]) { allDiag2 = false; break; }
+      }
+      if (allDiag2) return true;
+
+      return false;
+    }
+
+    function clearMarks() {
+      Array.from(gridEl.querySelectorAll("td")).forEach(td => {
+        const row = parseInt(td.getAttribute("data-row"), 10);
+        const col = parseInt(td.getAttribute("data-col"), 10);
+
+        if (row === 2 && col === 2) {
+          // FREE SPACE stays selected
+          td.classList.add("selected");
+          selected[row][col] = true;
+        } else {
+          td.classList.remove("selected");
+          selected[row][col] = false;
+        }
+      });
+      checkBingo(true);
+    }
+
+    newCardBtn.addEventListener("click", () => {
+      buildCard();
+      toastMessage.textContent = "New NCPDP Bingo card generated.";
+      toastMessage.classList.remove("bingo");
+    });
+
+    clearMarksBtn.addEventListener("click", () => {
+      clearMarks();
+      toastMessage.textContent = "Marks cleared. FREE SPACE remains selected.";
+      toastMessage.classList.remove("bingo");
+    });
+
+    // Initial render
+    buildCard();
+  </script>
+</body>
+</html>
